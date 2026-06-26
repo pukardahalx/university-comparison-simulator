@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Engineering Choice Simulator & Decision Matrix</title>
+    <style>
+        :root {
+            --bg-main: #0f172a;
+            --bg-card: #1e293b;
+            --bg-accent: #334155;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --color-padua: #ef4444;
+            --color-sapienza: #3b82f6;
+            --color-trento: #10b981;
+            --color-genoa: #f59e0b;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            line-height: 1.6;
+            padding: 2rem 1rem;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 2.5rem;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            letter-spacing: -0.05em;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(to right, #f8fafc, #94a3b8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        header p {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+        }
+
+        /* Added Styling for the panels */
+        .info-panel {
+            background-color: var(--bg-card);
+            padding: 1.25rem;
+            border-radius: 0 8px 8px 0;
+            margin-bottom: 1.5rem;
+            font-size: 0.95rem;
+            border-left: 4px solid var(--color-sapienza);
+        }
+
+        .developer-note {
+            border-left: 4px solid var(--color-padua);
+            background-color: var(--bg-card);
+            padding: 1.25rem;
+            border-radius: 0 8px 8px 0;
+            margin-bottom: 1rem;
+            font-size: 0.95rem;
+        }
+
+        /* 3-Column Top Layout */
+        .top-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (min-width: 992px) {
+            .top-grid {
+                grid-template-columns: 1.2fr 1fr;
+            }
+        }
+
+        .panel {
+            background-color: var(--bg-card);
+            border-radius: 12px;
+            padding: 1.75rem;
+            height: 100%;
+        }
+
+        .panel h2 {
+            font-size: 1.3rem;
+            margin-bottom: 1.25rem;
+            border-bottom: 1px solid var(--bg-accent);
+            padding-bottom: 0.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* Sliders */
+        .control-group {
+            margin-bottom: 1.1rem;
+        }
+
+        .control-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            margin-bottom: 0.25rem;
+            font-weight: 600;
+        }
+
+        .weight-indicator {
+            color: var(--color-sapienza);
+            font-family: monospace;
+        }
+
+        input[type=range] {
+            width: 100%;
+            accent-color: var(--text-main);
+            background: var(--bg-main);
+            height: 6px;
+            border-radius: 3px;
+            outline: none;
+        }
+
+        /* Realtime Leaderboard */
+        .rank-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .rank-item {
+            display: flex;
+            align-items: center;
+            background-color: var(--bg-main);
+            padding: 1rem;
+            border-radius: 8px;
+            border-left: 5px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .rank-item.first-place {
+            box-shadow: 0 0 15px rgba(239, 68, 68, 0.15);
+            transform: scale(1.01);
+        }
+
+        .rank-num {
+            font-size: 1.75rem;
+            font-weight: 800;
+            width: 40px;
+            color: var(--text-muted);
+            text-align: center;
+        }
+
+        .rank-meta {
+            flex-grow: 1;
+            padding-left: 1rem;
+        }
+
+        .rank-meta h4 { font-size: 1.05rem; }
+        .rank-meta p { font-size: 0.8rem; color: var(--text-muted); }
+
+        .rank-score {
+            font-family: monospace;
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        /* Dynamic Border/Text coloring via JS mapping */
+        .item-padua { border-left-color: var(--color-padua); }
+        .item-sapienza { border-left-color: var(--color-sapienza); }
+        .item-trento { border-left-color: var(--color-trento); }
+        .item-genoa { border-left-color: var(--color-genoa); }
+
+        .item-padua .rank-score { color: var(--color-padua); }
+        .item-sapienza .rank-score { color: var(--color-sapienza); }
+        .item-trento .rank-score { color: var(--color-trento); }
+        .item-genoa .rank-score { color: var(--color-genoa); }
+
+        /* Main Explorer Hub Layout */
+        .uni-selector-strip {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .selector-btn {
+            background-color: var(--bg-card);
+            border: 2px solid transparent;
+            border-radius: 8px;
+            padding: 1.25rem;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.2s ease;
+        }
+
+        .selector-btn:hover { background-color: var(--bg-accent); }
+        .selector-btn.active[data-target="padua"] { border-color: var(--color-padua); }
+        .selector-btn.active[data-target="sapienza"] { border-color: var(--color-sapienza); }
+        .selector-btn.active[data-target="trento"] { border-color: var(--color-trento); }
+        .selector-btn.active[data-target="genoa"] { border-color: var(--color-genoa); }
+
+        .selector-btn h3 { font-size: 1rem; }
+        .selector-btn p { font-size: 0.8rem; color: var(--text-muted); }
+
+        .dashboard-layout {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2rem;
+        }
+
+        @media (min-width: 768px) {
+            .dashboard-layout { grid-template-columns: 1.2fr 1fr; }
+        }
+
+        .metric-block { margin-bottom: 1.25rem; }
+        .bar-wrapper { background: var(--bg-main); height: 8px; border-radius: 4px; overflow: hidden; margin-top: 0.35rem;}
+        .bar-fill { height: 100%; width: 0%; transition: width 0.5s ease-out, background-color 0.3s; }
+
+        .rationales-container { display: flex; flex-direction: column; gap: 1rem; }
+        .rationale-node { background-color: var(--bg-main); padding: 1rem; border-radius: 6px; font-size: 0.9rem; }
+        .rationale-node strong { display: block; margin-bottom: 0.25rem; color: var(--text-main); }
+        .rationale-node span { color: var(--text-muted); }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>Engineering Choice Simulator</h1>
+            <p>A multi-criteria analysis justifying the structural pivot to University of Padua</p>
+        </header>
+
+        <div class="developer-note">
+            <strong>The Baseline Thesis:</strong> Application development is already a checked box in my personal stack. Re-studying abstract computer science risks redundancy. Selecting the <strong>University of Padua (Information Engineering)</strong> transitions skillset directly into physical systems layer engineering, mathematical optimization, and low-level computer hardware architectures.
+        </div>
+
+        <div class="info-panel">
+            <strong>Methodology & Data Sourcing:</strong> The baseline scores (0-100%) for each university are not arbitrary. They are calculations derived from comparing the required European Credit Transfer System (ECTS/CFU) allocations between the Italian L-8 macro-class (Engineering) and L-31 macro-class (Computer Science). For example, a program requiring 30 CFUs in physics and analog circuits scores heavily in "Hardware", while a program replacing those with 30 CFUs in Machine Learning scores heavily in "Software".
+        </div>
+
+        <div class="top-grid">
+            <div class="panel">
+                <h2>1. Adjust Priority Weights</h2>
+                <div class="control-group">
+                    <div class="control-header"><span>Hardware & Physical Layer Integration</span><span class="weight-indicator" id="w-text-hw">90%</span></div>
+                    <input type="range" id="w-hw" min="0" max="100" value="90">
+                </div>
+                <div class="control-group">
+                    <div class="control-header"><span>Software Architecture & Algorithms</span><span class="weight-indicator" id="w-text-sw">30%</span></div>
+                    <input type="range" id="w-sw" min="0" max="100" value="30">
+                </div>
+                <div class="control-group">
+                    <div class="control-header"><span>Telecommunications & Signals</span><span class="weight-indicator" id="w-text-tc">80%</span></div>
+                    <input type="range" id="w-tc" min="0" max="100" value="80">
+                </div>
+                <div class="control-group">
+                    <div class="control-header"><span>Mathematical & Physical Science Rigor</span><span class="weight-indicator" id="w-text-mp">95%</span></div>
+                    <input type="range" id="w-mp" min="0" max="100" value="95">
+                </div>
+                <div class="control-group">
+                    <div class="control-header"><span>Academic Ecosystem & Student-City Vibe</span><span class="weight-indicator" id="w-text-ae">85%</span></div>
+                    <input type="range" id="w-ae" min="0" max="100" value="85">
+                </div>
+            </div>
+
+            <div class="panel">
+                <h2>2. Simulated Overall Ranking</h2>
+                <div class="rank-list" id="leaderboard"></div>
+            </div>
+        </div>
+
+        <h2 style="margin-bottom: 1rem; font-size: 1.5rem;">3. Metric Criteria Breakdown & Strategic Rationale</h2>
+        <div class="uni-selector-strip">
+            <button class="selector-btn active" data-target="padua"><h3>University of Padua</h3><p>Information Eng.</p></button>
+            <button class="selector-btn" data-target="sapienza"><h3>Sapienza Rome</h3><p>Applied CS & AI</p></button>
+            <button class="selector-btn" data-target="trento"><h3>Uni Trento</h3><p>Computer, Comm & Elec</p></button>
+            <button class="selector-btn" data-target="genoa"><h3>Uni Genoa</h3><p>Computer Eng.</p></button>
+        </div>
+
+        <div class="dashboard-layout">
+            <div class="panel">
+                <h2 id="chart-title">Program Strengths</h2>
+                <div class="metric-block">
+                    <div class="control-header"><span>Hardware & Physical Layer</span><span id="v-hw">0%</span></div>
+                    <div class="bar-wrapper"><div class="bar-fill" id="b-hw"></div></div>
+                </div>
+                <div class="metric-block">
+                    <div class="control-header"><span>Software & Algorithms</span><span id="v-sw">0%</span></div>
+                    <div class="bar-wrapper"><div class="bar-fill" id="b-sw"></div></div>
+                </div>
+                <div class="metric-block">
+                    <div class="control-header"><span>Telecommunications & Signals</span><span id="v-tc">0%</span></div>
+                    <div class="bar-wrapper"><div class="bar-fill" id="b-tc"></div></div>
+                </div>
+                <div class="metric-block">
+                    <div class="control-header"><span>Math & Physical Rigor</span><span id="v-mp">0%</span></div>
+                    <div class="bar-wrapper"><div class="bar-fill" id="b-mp"></div></div>
+                </div>
+                <div class="metric-block">
+                    <div class="control-header"><span>Academic Ecosystem</span><span id="v-ae">0%</span></div>
+                    <div class="bar-wrapper"><div class="bar-fill" id="b-ae"></div></div>
+                </div>
+            </div>
+            <div class="panel">
+                <h2>Why this specific score allocation?</h2>
+                <div class="rationales-container" id="rationales-target"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const dataset = {
+            padua: {
+                name: "University of Padua", track: "BSc Information Engineering (L-8)", color: "var(--color-padua)",
+                scores: { hw: 95, sw: 85, tc: 90, mp: 95, ae: 98 },
+                rationales: {
+                    hw: "95% — Balanced low-level architectures, electronic design, and automation.",
+                    sw: "85% — Fundamentals in OOP and OS, shared with physical circuits.",
+                    tc: "90% — Strong focus on signals, protocols, and propagation.",
+                    mp: "95% — Traditional, rigorous engineering math and physics.",
+                    ae: "98% — Ancient, highly integrated, and student-focused city."
+                }
+            },
+            sapienza: {
+                name: "Sapienza Rome", track: "BSc Applied CS and AI (L-31)", color: "var(--color-sapienza)",
+                scores: { hw: 45, sw: 98, tc: 65, mp: 80, ae: 92 },
+                rationales: {
+                    hw: "45% — L-31 focus prioritizes software over physical circuit theory.",
+                    sw: "98% — Outstanding focus on pure code, AI, and ML.",
+                    tc: "65% — Approached from a data-payload perspective.",
+                    mp: "80% — Prioritizes discrete math and stats for AI over physics.",
+                    ae: "92% — Historic, but Rome's scale makes community integration difficult."
+                }
+            },
+            trento: {
+                name: "University of Trento", track: "BSc Computer, Comm. & Electronic", color: "var(--color-trento)",
+                scores: { hw: 92, sw: 70, tc: 95, mp: 88, ae: 85 },
+                rationales: {
+                    hw: "92% — Technical focus on embedded processors and sensors.",
+                    sw: "70% — Focus on structural software for hardware control.",
+                    tc: "95% — Globally recognized communications architecture.",
+                    mp: "88% — Strong emphasis on wave propagation and signals.",
+                    ae: "85% — Pristine location, though a smaller research ecosystem."
+                }
+            },
+            genoa: {
+                name: "University of Genoa", track: "BSc Computer Engineering (L-8)", color: "var(--color-genoa)",
+                scores: { hw: 80, sw: 88, tc: 70, mp: 85, ae: 82 },
+                rationales: {
+                    hw: "80% — Integration of physical logic and manufacturing automation.",
+                    sw: "88% — Balanced approach to industrial software and backend.",
+                    tc: "70% — Fundamentals in routing and data interfaces.",
+                    mp: "85% — Standard rigorous polytechnic math core.",
+                    ae: "82% — Dense industrial landscape, less focused on student life."
+                }
+            }
+        };
+
+        const weightSliders = {
+            hw: document.getElementById('w-hw'), sw: document.getElementById('w-sw'),
+            tc: document.getElementById('w-tc'), mp: document.getElementById('w-mp'),
+            ae: document.getElementById('w-ae')
+        };
+
+        function processSimulationAndRankings() {
+            const weights = { hw: parseInt(weightSliders.hw.value), sw: parseInt(weightSliders.sw.value), tc: parseInt(weightSliders.tc.value), mp: parseInt(weightSliders.mp.value), ae: parseInt(weightSliders.ae.value) };
+            for (let m in weights) document.getElementById(`w-text-${m}`).innerText = weights[m] + "%";
+            const totalWeightsSum = Object.values(weights).reduce((a, b) => a + b, 0);
+            const activeRankingList = [];
+            for (let key in dataset) {
+                const uni = dataset[key];
+                let weighted = 0;
+                for (let m in weights) weighted += (uni.scores[m] * weights[m]);
+                activeRankingList.push({ id: key, name: uni.name, track: uni.track, finalScore: (totalWeightsSum === 0 ? 0 : (weighted / totalWeightsSum)).toFixed(1) });
+            }
+            activeRankingList.sort((a, b) => b.finalScore - a.finalScore);
+            const leaderboardContainer = document.getElementById('leaderboard');
+            leaderboardContainer.innerHTML = '';
+            activeRankingList.forEach((uni, index) => {
+                const rankNum = index + 1;
+                leaderboardContainer.insertAdjacentHTML('beforeend', `<div class="rank-item ${rankNum === 1 ? 'first-place' : ''} item-${uni.id}"><div class="rank-num">#${rankNum}</div><div class="rank-meta"><h4>${uni.name}</h4><p>${uni.track}</p></div><div class="rank-score">${uni.finalScore}</div></div>`);
+            });
+        }
+
+        function updateDetailDashboard(uniKey) {
+            const data = dataset[uniKey];
+            document.getElementById('chart-title').innerText = `${data.name} Metrics`;
+            for (let m in data.scores) {
+                document.getElementById(`b-${m}`).style.width = `${data.scores[m]}%`;
+                document.getElementById(`b-${m}`).style.backgroundColor = data.color;
+                document.getElementById(`v-${m}`).innerText = `${data.scores[m]}%`;
+            }
+            const rationaleBox = document.getElementById('rationales-target');
+            rationaleBox.innerHTML = '';
+            const labels = { hw: "Hardware", sw: "Software", tc: "Telecoms", mp: "Math/Physics", ae: "Academic Ecosystem" };
+            for (let m in data.rationales) {
+                rationaleBox.insertAdjacentHTML('beforeend', `<div class="rationale-node" style="border-left: 3px solid ${data.color}"><strong>${labels[m]}</strong><span>${data.rationales[m]}</span></div>`);
+            }
+        }
+
+        document.querySelectorAll('.selector-btn').forEach(btn => btn.addEventListener('click', () => {
+            document.querySelectorAll('.selector-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            updateDetailDashboard(btn.dataset.target);
+        }));
+        Object.values(weightSliders).forEach(s => s.addEventListener('input', processSimulationAndRankings));
+        window.addEventListener('DOMContentLoaded', () => { processSimulationAndRankings(); updateDetailDashboard('padua'); });
+    </script>
+</body>
+</html>
